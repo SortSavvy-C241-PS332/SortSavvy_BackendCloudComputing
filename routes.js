@@ -1,17 +1,27 @@
-const { addUserLoginList, updateUserProfile } = require('./handler');
+const { registerUser, loginUser, updateUserProfile } = require('./handler');
 
 const routes = [
     {
         method: 'POST',
-        path: '/users',
+        path: '/register',
         options: {
             payload: {
-                output: 'stream',
-                parse: true,
-                multipart: true
+                output: 'data',
+                parse: true
             }
         },
-        handler: addUserLoginList,
+        handler: registerUser,
+    },
+    {
+        method: 'POST',
+        path: '/login',
+        options: {
+            payload: {
+                output: 'data',
+                parse: true
+            }
+        },
+        handler: loginUser,
     },
     {
         method: 'PUT',
