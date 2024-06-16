@@ -1,13 +1,10 @@
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
-const path = require('path');
-const fs = require('fs');
 
-const addUserLoginList = async (request, h) => {
-    console.log('Request payload:', request.payload); // Tambahkan log di sini
+const registerUser = async (request, h) => {
+    console.log('Received payload:', request.payload);
 
     const { fullName, email, password, confirmPassword } = request.payload;
-    const profilePhoto = request.payload.profilePhoto;
 
     if (!email) {
         return h.response({
@@ -35,28 +32,12 @@ const addUserLoginList = async (request, h) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        let profilePhotoPath = null;
-        if (profilePhoto) {
-            const filePath = `uploads/${Date.now()}_${profilePhoto.hapi.filename}`;
-            const fileStream = fs.createWriteStream(filePath);
-
-            await new Promise((resolve, reject) => {
-                profilePhoto.pipe(fileStream);
-                profilePhoto.on('end', (err) => {
-                    if (err) {
-                        reject(err);
-                    }
-                    profilePhotoPath = filePath;
-                    resolve();
-                });
-            });
-        }
-
+        // Simpan pengguna baru tanpa profilePhoto
         const newUser = await User.create({
             fullName,
             email,
             password: hashedPassword,
-            profilePhoto: profilePhotoPath // Menyimpan path file
+            profilePhoto: null, // Atur ini ke null jika tidak ada profilePhoto
         });
 
         return h.response({
@@ -69,7 +50,56 @@ const addUserLoginList = async (request, h) => {
             },
         }).code(201);
     } catch (err) {
-        console.error('Error during user registration:', err); // Cetak stack trace dari error
+        console.error('Error during user registration:', err);
+        return h.response({
+            status: 'fail',
+            message: 'Internal Server Error',
+        }).code(500);
+    }
+};
+
+const loginUser = async (request, h) => {
+    console.log('Received payload:', request.payload);
+
+    const { email, password } = request.payload;
+
+    if (!email || !password) {
+        return h.response({
+            status: 'fail',
+            message: 'Email and password are required',
+        }).code(400);
+    }
+
+    try {
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) {
+            return h.response({
+                status: 'fail',
+                message: 'Email not found',
+            }).code(400);
+        }
+
+        const isValidPassword = await bcrypt.compare(password, user.password);
+
+        if (!isValidPassword) {
+            return h.response({
+                status: 'fail',
+                message: 'Incorrect password',
+            }).code(400);
+        }
+
+        return h.response({
+            status: 'success',
+            message: 'Login successful',
+            data: {
+                email: user.email,
+                fullName: user.fullName,
+                profilePhoto: user.profilePhoto,
+            },
+        }).code(200);
+    } catch (err) {
+        console.error('Error during user login:', err);
         return h.response({
             status: 'fail',
             message: 'Internal Server Error',
@@ -78,11 +108,8 @@ const addUserLoginList = async (request, h) => {
 };
 
 const updateUserProfile = async (request, h) => {
-    console.log('Update request payload:', request.payload); // Tambahkan log di sini
-
-    const { id } = request.params; // Assuming the user ID is passed as a parameter
-    const { fullName, email, password } = request.payload;
-    const profilePhoto = request.payload.profilePhoto;
+    const { id } = request.params;
+    const { fullName, email, password, profilePhoto } = request.payload;
 
     try {
         const user = await User.findByPk(id);
@@ -128,7 +155,7 @@ const updateUserProfile = async (request, h) => {
                 });
             });
         }
-        
+
         await user.save();
 
         return h.response({
@@ -142,7 +169,7 @@ const updateUserProfile = async (request, h) => {
             },
         }).code(200);
     } catch (err) {
-        console.error('Error during profile update:', err); // Cetak stack trace dari error
+        console.error('Error during profile update:', err);
         return h.response({
             status: 'fail',
             message: 'Internal Server Error',
@@ -150,4 +177,4 @@ const updateUserProfile = async (request, h) => {
     }
 };
 
-module.exports = { addUserLoginList, updateUserProfile };
+module.exports = { registerUser, loginUser, updateUserProfile };
