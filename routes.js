@@ -1,4 +1,4 @@
-const { registerUser, loginUser, updateUserProfile } = require('./handler');
+const { registerUser, loginUser, getUser, updateUserProfile, logoutUser } = require('./handler');
 
 const routes = [
     {
@@ -22,6 +22,11 @@ const routes = [
             }
         },
         handler: loginUser,
+    },
+    {
+        method: 'GET',
+        path: '/users/{id}',
+        handler: getUser,
     },
     {
         method: 'PUT',
