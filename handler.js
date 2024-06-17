@@ -1,6 +1,7 @@
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
 
+// Handler untuk registrasi pengguna
 const registerUser = async (request, h) => {
     console.log('Received payload:', request.payload);
 
@@ -32,12 +33,11 @@ const registerUser = async (request, h) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Simpan pengguna baru tanpa profilePhoto
         const newUser = await User.create({
             fullName,
             email,
             password: hashedPassword,
-            profilePhoto: null, // Atur ini ke null jika tidak ada profilePhoto
+            profilePhoto: null,
         });
 
         return h.response({
@@ -58,6 +58,7 @@ const registerUser = async (request, h) => {
     }
 };
 
+// Handler untuk login pengguna
 const loginUser = async (request, h) => {
     console.log('Received payload:', request.payload);
 
@@ -93,6 +94,7 @@ const loginUser = async (request, h) => {
             status: 'success',
             message: 'Login successful',
             data: {
+                user_id: user.id, // Tambahkan user_id ke dalam respons
                 email: user.email,
                 fullName: user.fullName,
                 profilePhoto: user.profilePhoto,
@@ -107,6 +109,36 @@ const loginUser = async (request, h) => {
     }
 };
 
+// Handler untuk mendapatkan data pengguna berdasarkan user_id
+const getUser = async (request, h) => {
+    const { id } = request.params;
+
+    try {
+        const user = await User.findByPk(id, {
+            attributes: ['id', 'fullName', 'email', 'profilePhoto', 'createdAt', 'updatedAt']
+        });
+
+        if (!user) {
+            return h.response({
+                status: 'fail',
+                message: 'User not found',
+            }).code(404);
+        }
+
+        return h.response({
+            status: 'success',
+            data: user,
+        }).code(200);
+    } catch (err) {
+        console.error('Error retrieving user data:', err);
+        return h.response({
+            status: 'fail',
+            message: 'Internal Server Error',
+        }).code(500);
+    }
+};
+
+// Handler untuk memperbarui profil pengguna
 const updateUserProfile = async (request, h) => {
     const { id } = request.params;
     const { fullName, email, password, profilePhoto } = request.payload;
@@ -177,4 +209,4 @@ const updateUserProfile = async (request, h) => {
     }
 };
 
-module.exports = { registerUser, loginUser, updateUserProfile };
+module.exports = { registerUser, loginUser, getUser, updateUserProfile};
