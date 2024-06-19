@@ -1,4 +1,4 @@
-const { registerUser, loginUser, getUser, updateUserProfile, logoutUser } = require('./handler');
+const { registerUser, loginUser, getUser, updateUserProfile, updateUserPassword } = require('./handler');
 
 const routes = [
     {
@@ -39,6 +39,18 @@ const routes = [
             }
         },
         handler: updateUserProfile,
+    },
+    {
+        method: 'PUT',
+        path: '/users/{id}/password',
+        options: {
+            payload: {
+                output: 'stream',
+                parse: true,
+                multipart: true
+            }
+        },
+        handler: updateUserPassword,
     },
 ];
 
