@@ -1,5 +1,6 @@
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
+const fs = require('fs');
 
 // Handler untuk registrasi pengguna
 const registerUser = async (request, h) => {
@@ -33,11 +34,14 @@ const registerUser = async (request, h) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        const defaultProfilePhoto = './assets/default_avatar.png';
+
         const newUser = await User.create({
             fullName,
             email,
             password: hashedPassword,
-            profilePhoto: null,
+            profilePhoto: defaultProfilePhoto,
+            totalScans: 0,
         });
 
         return h.response({
@@ -98,6 +102,7 @@ const loginUser = async (request, h) => {
                 email: user.email,
                 fullName: user.fullName,
                 profilePhoto: user.profilePhoto,
+                totalScans: user.totalScans,
             },
         }).code(200);
     } catch (err) {
@@ -141,7 +146,8 @@ const getUser = async (request, h) => {
 // Handler untuk memperbarui profil pengguna
 const updateUserProfile = async (request, h) => {
     const { id } = request.params;
-    const { fullName, email, password, profilePhoto } = request.payload;
+    const { fullName, email, password } = request.payload;
+    const profilePhoto = request.payload.profilePhoto;
 
     try {
         const user = await User.findByPk(id);
@@ -152,11 +158,21 @@ const updateUserProfile = async (request, h) => {
             }).code(404);
         }
 
+        // Validasi password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        if (!isValidPassword) {
+            return h.response({
+                status: 'fail',
+                message: 'Incorrect password',
+            }).code(400);
+        }
+
+        // Perbarui profil
         if (fullName) {
             user.fullName = fullName;
         }
 
-        if (email) {
+        if (email && email !== user.email) {
             const existingUser = await User.findOne({ where: { email } });
             if (existingUser && existingUser.id !== id) {
                 return h.response({
@@ -165,11 +181,6 @@ const updateUserProfile = async (request, h) => {
                 }).code(400);
             }
             user.email = email;
-        }
-
-        if (password) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            user.password = hashedPassword;
         }
 
         if (profilePhoto) {
@@ -209,4 +220,44 @@ const updateUserProfile = async (request, h) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getUser, updateUserProfile};
+// Handler untuk memperbarui password pengguna
+const updateUserPassword = async (request, h) => {
+    const { id } = request.params;
+    const { currentPassword, newPassword } = request.payload;
+
+    try {
+        const user = await User.findByPk(id);
+        if (!user) {
+            return h.response({
+                status: 'fail',
+                message: 'User not found',
+            }).code(404);
+        }
+
+        const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+        if (!isValidPassword) {
+            return h.response({
+                status: 'fail',
+                message: 'Incorrect current password',
+            }).code(400);
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+
+        await user.save();
+
+        return h.response({
+            status: 'success',
+            message: 'Password updated successfully',
+        }).code(200);
+    } catch (err) {
+        console.error('Error during password update:', err);
+        return h.response({
+            status: 'fail',
+            message: 'Internal Server Error',
+        }).code(500);
+    }
+};
+
+module.exports = { registerUser, loginUser, getUser, updateUserProfile, updateUserPassword };
