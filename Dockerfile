@@ -13,6 +13,9 @@ RUN npm install
 # Salin semua file dari direktori lokal ke dalam container
 COPY . .
 
+# Salin direktori assets ke dalam container
+COPY assets ./assets
+
 # Expose port yang digunakan oleh aplikasi
 EXPOSE 8000
 
