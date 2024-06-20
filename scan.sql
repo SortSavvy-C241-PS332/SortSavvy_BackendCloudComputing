@@ -1,0 +1,10 @@
+CREATE DATABASE IF NOT EXISTS bangkit_db;
+
+USE bangkit_db;
+
+CREATE TABLE IF NOT EXISTS total_scan (
+    id_scan INT AUTO_INCREMENT PRIMARY KEY, 
+    user_id INT NOT NULL, waste VARCHAR(255) NOT NULL, 
+    scan_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    FOREIGN KEY (user_id) REFERENCES Users(id) );
+);
