@@ -1,8 +1,8 @@
 const { Sequelize } = require('sequelize');
 
 // Ubah 'localhost' atau '127.0.0.1' menjadi 'host.docker.internal'
-const sequelize = new Sequelize('db_bangkit', 'root', '', {
-    host: 'host.docker.internal',
+const sequelize = new Sequelize('profile_db', 'root', 'userss', {
+    host: '34.128.106.109',
     dialect: 'mysql',
 });
 

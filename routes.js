@@ -1,4 +1,4 @@
-const { registerUser, loginUser, getUser, updateUserProfile, updateUserPassword } = require('./handler');
+const { registerUser, loginUser, getUser, updateUserProfile, updateUserPassword, getTotalScan } = require('./handler');
 
 const routes = [
     {
@@ -51,6 +51,18 @@ const routes = [
             }
         },
         handler: updateUserPassword,
+    },
+    {
+        method: 'GET',
+        path: '/totalScan/{user_id}',
+        options: {
+            payload: {
+                output: 'stream',
+                parse: true,
+                multipart: true
+            }
+        },
+        handler: getTotalScan,
     },
 ];
 

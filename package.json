@@ -5,8 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./src/server.js",
-    "regis": "node ./src/register.js"
+    "start": "node server.js",
+    "regis": "node register.js"
   },
   "keywords": [],
   "author": "",

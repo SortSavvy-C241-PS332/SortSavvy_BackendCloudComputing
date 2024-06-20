@@ -260,4 +260,22 @@ const updateUserPassword = async (request, h) => {
     }
 };
 
-module.exports = { registerUser, loginUser, getUser, updateUserProfile, updateUserPassword };
+// Handler untuk menampilkan informasi jumlah scan yang dilakukan user
+const getTotalScan = async (request, h) => {
+    const { user_id } = request.params;
+
+    const getScanQty = async (user_id) => {
+        const [rows] = await sequelize.query('SELECT COUNT(*) as count FROM scans WHERE user_id = ?', [user_id]);
+        return rows[0].count;
+    };
+
+    try {
+        const scanQty = await getScanQty(user_id);
+        return h.response({ user_id, scanQty }).code(200);
+    } catch (error) {
+        console.error(error);
+        return h.response({ error: 'Internal Server Error' }).code(500);
+    }
+};
+
+module.exports = { registerUser, loginUser, getUser, updateUserProfile, updateUserPassword, getTotalScan };
