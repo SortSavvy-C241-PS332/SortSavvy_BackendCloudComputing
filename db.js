@@ -1,19 +1,26 @@
-const { Sequelize } = require('sequelize');
+const mysql = require('mysql2/promise');
 
-// Ubah 'localhost' atau '127.0.0.1' menjadi 'host.docker.internal'
-const sequelize = new Sequelize('profile_db', 'root', 'userss', {
+// Buat koneksi ke Cloud SQL
+const pool = mysql.createPool({
     host: '34.128.106.109',
-    dialect: 'mysql',
+    user: 'root',
+    password: 'userss',
+    database: 'test_db',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
-const connectDB = async () => {
-    try {
-        await sequelize.authenticate();
-        console.log('Database Connected...');
-    } catch (err) {
-        console.error('Unable to connect to the database:', err.message);
-        process.exit(1);
-    }
+// Fungsi untuk mendapatkan jumlah scan
+const getScanQty = async (user_id) => {
+    const [rows] = await pool.query('SELECT COUNT(*) as count FROM total_scan WHERE user_id = ?', [user_id]);
+    return rows[0].count;
 };
 
-module.exports = { connectDB, sequelize };
+// Fungsi untuk memperbarui data scan
+const updateScanQty = async (user_id, waste) => {
+    const [result] = await pool.query('INSERT INTO total_scan (user_id, waste) VALUES (?, ?)', [user_id, waste]);
+    return { success: result.affectedRows > 0 };
+};
+
+module.exports = { getScanQty, updateScanQty };
